@@ -70,11 +70,21 @@ target_include_directories(cxxopts INTERFACE
     $<INSTALL_INTERFACE:include>
     )
 
+include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 set(CXXOPTS_CMAKE_DIR "lib/cmake/cxxopts" CACHE STRING
   "Installation directory for cmake files, relative to ${CMAKE_INSTALL_PREFIX}.")
 set(version_config "${PROJECT_BINARY_DIR}/cxxopts-config-version.cmake")
 set(project_config "${PROJECT_BINARY_DIR}/cxxopts-config.cmake")
+set(install_runtime_dir ${CMAKE_INSTALL_BINDIR})
+set(install_config_dir  ${CMAKE_INSTALL_LIBDIR}/${PROJECT_PREFIX}/cmake)
+set(install_library_dir ${CMAKE_INSTALL_LIBDIR}/${PROJECT_PREFIX}/${CMAKE_BUILD_TYPE})
+set(install_archive_dir ${CMAKE_INSTALL_LIBDIR}/${PROJECT_PREFIX}/${CMAKE_BUILD_TYPE}/static)
+set(install_include_dir ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_PREFIX}/${PROJECT_NAME})
+
+# Define the configuration file locations.
+set(PROJECT_CONFIG_VERSION_FILE "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake")
+set(project_config_file         "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake")
 set(targets_export_name cxxopts-targets)
 
 # Generate the version, config and target files into the build directory.
@@ -86,19 +96,34 @@ configure_package_config_file(
     ${PROJECT_SOURCE_DIR}/cxxopts-config.cmake.in
     ${project_config}
     INSTALL_DESTINATION ${CXXOPTS_CMAKE_DIR})
-export(TARGETS cxxopts NAMESPACE cxxopts::
-    FILE ${PROJECT_BINARY_DIR}/${targets_export_name}.cmake)
+install(TARGETS ${PROJECT_NAME}
+    EXPORT ${targets_export_name}
+    RUNTIME DESTINATION ${install_runtime_dir}
+    LIBRARY DESTINATION ${install_library_dir}
+    ARCHIVE DESTINATION ${install_archive_dir})
 
 # Install version, config and target files.
 install(
     FILES ${project_config} ${version_config}
     DESTINATION ${CXXOPTS_CMAKE_DIR})
-install(EXPORT ${targets_export_name} DESTINATION ${CXXOPTS_CMAKE_DIR}
-    NAMESPACE cxxopts::)
+install(EXPORT ${targets_export_name}
+    NAMESPACE cxxopts::
+    DESTINATION ${CXXOPTS_CMAKE_DIR})
 
 # Install the header file and export the target
-install(TARGETS cxxopts EXPORT ${targets_export_name} DESTINATION lib)
-install(FILES ${PROJECT_SOURCE_DIR}/include/cxxopts.hpp DESTINATION include)
+install(
+    FILES ${PROJECT_SOURCE_DIR}/include/cxxopts.hpp
+    DESTINATION ${install_include_dir})
+
+# The INSTALL(EXPORT) command installs a previously defined export group to a script.
+install(EXPORT ${PROJECT_NAME}-targets
+    FILE ${PROJECT_NAME}-targets.cmake
+    NAMESPACE ${PROJECT_NAME}::
+    DESTINATION ${install_config_dir})
+export(EXPORT ${PROJECT_NAME}-targets
+    FILE ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-targets.cmake
+    NAMESPACE ${PROJECT_NAME}::)
+export(PACKAGE ${PROJECT_NAME})
 
 add_subdirectory(src)
 add_subdirectory(test)
