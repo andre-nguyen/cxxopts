@@ -73,13 +73,14 @@ target_include_directories(cxxopts
         $<INSTALL_INTERFACE:include/${PROJECT_PREFIX}>
     )
 
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
 set(install_runtime_dir ${CMAKE_INSTALL_BINDIR})
 set(install_config_dir  ${CMAKE_INSTALL_LIBDIR}/${PROJECT_PREFIX}/cmake)
 set(install_library_dir ${CMAKE_INSTALL_LIBDIR}/${PROJECT_PREFIX}/${CMAKE_BUILD_TYPE})
 set(install_archive_dir ${CMAKE_INSTALL_LIBDIR}/${PROJECT_PREFIX}/${CMAKE_BUILD_TYPE}/static)
 set(install_include_dir ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_PREFIX}/${PROJECT_NAME})
 
-include(CMakePackageConfigHelpers)
 set(CXXOPTS_CMAKE_DIR "lib/cmake/cxxopts" CACHE STRING
   "Installation directory for cmake files, relative to ${CMAKE_INSTALL_PREFIX}.")
 set(version_config "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake")
@@ -102,12 +103,14 @@ install(TARGETS ${PROJECT_NAME}
   LIBRARY DESTINATION ${install_library_dir}
   ARCHIVE DESTINATION ${install_archive_dir})
 
-install(EXPORT ${PROJECT_NAME}-targets
+install(
+  EXPORT ${PROJECT_NAME}-targets
   FILE ${PROJECT_NAME}-targets.cmake
   NAMESPACE ${PROJECT_NAME}::
   DESTINATION ${install_config_dir})
 
-export(EXPORT ${PROJECT_NAME}-targets
+export(
+  EXPORT ${PROJECT_NAME}-targets
   FILE ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-targets.cmake
   NAMESPACE ${PROJECT_NAME}::)
 
@@ -126,6 +129,25 @@ install(
 install(
   FILES ${PROJECT_SOURCE_DIR}/include/cxxopts.hpp
   DESTINATION ${install_include_dir})
+
+install(
+  TARGETS ${PROJECT_NAME}
+  EXPORT ${PROJECT_NAME}_CATKIN_EXPORT
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
+
+install(
+  EXPORT ${PROJECT_NAME}_CATKIN_EXPORT
+  DESTINATION share/${PROJECT_NAME}/cmake/
+  FILE ${PROJECT_NAME}-targets.cmake
+)
+
+install(
+  FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake
+  DESTINATION share/${PROJECT_NAME}/
+)
 
 add_subdirectory(src)
 add_subdirectory(test)
